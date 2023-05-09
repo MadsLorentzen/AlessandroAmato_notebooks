@@ -13,7 +13,7 @@ HISTORY
 
 import numpy as np
 import matplotlib.pyplot as plt
-import agilegeo
+import bruges
 from pandas import Series, DataFrame
 import pandas as pd
 

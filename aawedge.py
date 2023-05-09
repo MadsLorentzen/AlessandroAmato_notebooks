@@ -25,7 +25,7 @@ HISTORY
 
 import numpy as np
 import matplotlib.pyplot as plt
-import agilegeo
+import bruges
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def make_wedge(n_traces,encasing_thickness,min_thickness,max_thickness,dz=0.1):
@@ -42,22 +42,22 @@ def make_wedge(n_traces,encasing_thickness,min_thickness,max_thickness,dz=0.1):
     OUTPUT
     wedge: 2D numpy array containing wedge-shaped model made of 3 units
     '''
-    encasing_thickness *= (1./dz)
-    min_thickness *= (1./dz)
-    max_thickness *= (1./dz)
+    encasing_thickness *= np.int((1./dz))
+    min_thickness *= np.int((1./dz))
+    max_thickness *= np.int((1./dz))
     deltaz=float(max_thickness-min_thickness)/float(n_traces)
     n_samples=max_thickness+encasing_thickness*2
     top_wedge=encasing_thickness
-    wedge = np.zeros((n_samples, n_traces))
+    wedge = np.zeros((np.int(n_samples), np.int(n_traces)))
     wedge[0:encasing_thickness,:]=1
     wedge[encasing_thickness:,:]=3
     wedge[encasing_thickness:encasing_thickness+min_thickness,:]=2
     for i in range(n_traces):
         wedge[encasing_thickness+min_thickness:encasing_thickness+min_thickness+int(round(deltaz*i)),i]=2
-    print "wedge minimum thickness: %.2f m" % (min_thickness*dz)
-    print "wedge maximum thickness: %.2f m" % (max_thickness*dz)
-    print "wedge vertical sampling: %.2f m" % (dz)
-    print "wedge samples, traces: %dx%d" % (wedge.shape)
+    print("wedge minimum thickness: %.2f m" % (min_thickness*dz))
+    print("wedge maximum thickness: %.2f m" % (max_thickness*dz))
+    print("wedge vertical sampling: %.2f m" % (dz))
+    print("wedge samples, traces: %dx%d" % (wedge.shape))
     return wedge
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,7 +162,7 @@ def make_rc_elastic(model_vp,model_vs,model_rho,ang):
     rc_mid: 2D numpy array containing mid-stack reflectivities
     rc_far: 2D numpy array containing far-stack reflectivities
     '''
-    from agilegeo.avo import akirichards
+    from bruges.avo import akirichards
     [n_samples, n_traces] = model_vp.shape
     rc_near=np.zeros((n_samples,n_traces))
     rc_mid=np.zeros((n_samples,n_traces))
@@ -202,13 +202,13 @@ def make_synth(rc,wavelet):
         synth = np.zeros((n_samples+nt-1, n_traces))
         for i in range(n_traces):
             synth[:,i] = np.convolve(rc[:,i], wavelet)
-        synth = synth[np.ceil(len(wavelet))/2:-np.ceil(len(wavelet))/2, :]
+        synth = synth[np.int(np.ceil(len(wavelet))/2):np.int(-np.ceil(len(wavelet))/2), :]
         synth=np.concatenate((synth,np.zeros((1,n_traces))))
     else:
         n_samples = rc.size
         synth = np.zeros(n_samples+nt-1)
         synth = np.convolve(rc, wavelet)
-        synth = synth[np.ceil(len(wavelet))/2:-np.ceil(len(wavelet))/2]
+        synth = synth[np.int(np.ceil(len(wavelet))/2):np.int(-np.ceil(len(wavelet))/2)]
         synth=np.concatenate((synth,[0]))
     return synth
 
@@ -271,7 +271,7 @@ def forward_model(model,aiprop,wavelet,dz,dt):
     """
     earth = assign_ai(model, aiprop)
     vels = assign_vel(model, aiprop)
-    earth_time=agilegeo.avo.depth_to_time(earth,vels,dz,dt,twt=True)
+    earth_time=bruges.transform.timedepthconv.depth_to_time(earth,vels,dz,dt,twt=True)
     rc = make_rc(earth_time)
     return make_synth(rc,wavelet)
 
@@ -281,9 +281,9 @@ def forward_model_elastic(model,elprop,wavelet,ang,dz,dt):
     Meta function to do everything from scratch (angle-dependent models).
     """
     model_vp,model_vs,model_rho = assign_el(model,elprop)
-    model_vp_time=agilegeo.avo.depth_to_time(model_vp,model_vp,dz,dt,twt=True)
-    model_vs_time=agilegeo.avo.depth_to_time(model_vs,model_vp,dz,dt,twt=True)
-    model_rho_time=agilegeo.avo.depth_to_time(model_rho,model_vp,dz,dt,twt=True)
+    model_vp_time=bruges.avo.depth_to_time(model_vp,model_vp,dz,dt,twt=True)
+    model_vs_time=bruges.avo.depth_to_time(model_vs,model_vp,dz,dt,twt=True)
+    model_rho_time=bruges.avo.depth_to_time(model_rho,model_vp,dz,dt,twt=True)
 
     rc_near, rc_mid, rc_far=make_rc_elastic(model_vp_time,model_vs_time,model_rho_time,ang)
     near = make_synth(rc_near,wavelet)
@@ -298,9 +298,9 @@ def forward_model_elastic_decay(model,elprop,wav_near,wav_mid,wav_far,dz,dt):
     Uses angle-dependent wavelet to simulate frequency decay with offset.
     """
     model_vp,model_vs,model_rho = assign_el(model,elprop)
-    model_vp_time=agilegeo.avo.depth_to_time(model_vp,model_vp,dz,dt,twt=True)
-    model_vs_time=agilegeo.avo.depth_to_time(model_vs,model_vp,dz,dt,twt=True)
-    model_rho_time=agilegeo.avo.depth_to_time(model_rho,model_vp,dz,dt,twt=True)
+    model_vp_time=bruges.avo.depth_to_time(model_vp,model_vp,dz,dt,twt=True)
+    model_vs_time=bruges.avo.depth_to_time(model_vs,model_vp,dz,dt,twt=True)
+    model_rho_time=bruges.avo.depth_to_time(model_rho,model_vp,dz,dt,twt=True)
 
     rc_near, rc_mid, rc_far=make_rc_elastic(model_vp_time,model_vs_time,model_rho_time,ang)
     near = make_synth(rc_near,wav_near)

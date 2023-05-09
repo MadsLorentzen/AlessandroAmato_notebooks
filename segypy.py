@@ -646,20 +646,20 @@ def write_segy(filename, data, dt=1000, trace_header_in=None, header_in=None):
     shape = data.shape
     ns = shape[0]
     ntraces = shape[1]
-    print ntraces, ns
+    print( ntraces, ns)
 
     header = get_default_segy_header(ntraces, ns)
     trace_header = get_default_segy_trace_headers(ntraces, ns, dt)
 
     # Add trace_header_in, if exists...
     for key in trace_header_in.keys():
-        print key
+        print( key)
         for a in range(ntraces):
             trace_header[key] = trace_header_in[key][a]
 
     # Add header_in, if exists...
     for key in header_in.keys():
-        print key
+        print(key)
         header[key] = header_in[key]
 
     write_segy_structure(filename, data, header, trace_header)
